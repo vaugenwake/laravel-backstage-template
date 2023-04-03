@@ -1,0 +1,8 @@
+#.docker
+.git
+.github
+.kube
+docs
+.editorconfig
+docker-compose.yml
+README.md

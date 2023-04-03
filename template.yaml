@@ -1,0 +1,117 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: laravel-api
+  title: Laravel API
+  description: Create a new laravel REST API
+  tags:
+    - recommended
+    - techdocs
+    - microservice
+spec:
+  owner: guest
+  type: service
+
+  parameters:
+    - title: Service Details
+      required:
+        - name
+        - description
+      properties:
+        name:
+          title: Name
+          type: string
+          description: Unique name of the service
+          ui:field: EntityNamePicker
+          ui:autofocus: true
+        description:
+          title: Description
+          type: string
+          description: A description for the service
+        owner:
+          title: Owner
+          type: string
+          description: Owner of the component
+          ui:field: OwnerPicker
+          ui:options:
+            allowedKinds:
+              - Group
+    - title: Choose a location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+            allowedOwners:
+              - vaugenwake
+              - tradigital-uk
+
+  # This template is meant to be used on top of an existing template.
+  # By adding the following and fetching from an absolute URL you can
+  # add in the docs template
+  steps:
+    - id: clone
+      name: Clone Laravel
+      action: git:clone
+      input:
+        repoUrl: https://github.com/laravel/laravel.git
+        args: ["."]
+
+    - id: clean-repo
+      name: Clean application
+      action: fs:delete
+      input:
+        files:
+          - .git/
+          - README.md
+          - .github/
+
+    - id: fetch
+      name: Scaffolding
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          destination: ${{ parameters.repoUrl | parseRepoUrl }}
+          owner: ${{ parameters.owner }}
+
+    - id: publish
+      name: Publish
+      action: publish:github
+      input:
+        allowedHosts: ["github.com"]
+        description: This is ${{ parameters.name }}
+        repoUrl: ${{ parameters.repoUrl }}
+        access: "private"
+        gitCommitMessage: "Scoffolded Laravel REST Microservice"
+        gitAuthorName: ${{ user.entity.metadata.name }}
+        gitAuthorEmail: ${{ user.entity.spec.profile.email }}
+
+    - id: register
+      name: Register
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: "/catalog-info.yaml"
+
+    - id: register-api
+      name: Register API
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: "/api-info.yaml"
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}

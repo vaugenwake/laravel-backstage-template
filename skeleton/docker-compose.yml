@@ -1,0 +1,27 @@
+version: '3.7'
+networks:
+    "${{ values.name }}":
+services:
+    "${{ values.name }}-nginx":
+        build:
+            dockerfile: .docker/nginx/Dockerfile
+            context: .
+        volumes:
+            - ./public/:/var/www/html/public
+        environment:
+            PHP_FPM: "php:9000"
+        ports:
+            - 8089:80
+        networks:
+            - ${{ values.name }}
+    "${{ values.name }}-php":
+        user: "${UID_GID}"
+        build:
+            dockerfile: .docker/php/Dockerfile
+            context: .
+            target: base
+        volumes:
+            - ./:/var/www/html
+        working_dir: /var/www/html/public
+        networks:
+            - ${{ values.name }}

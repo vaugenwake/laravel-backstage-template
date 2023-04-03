@@ -1,0 +1,24 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: ${{values.name | dump}}
+  description: ${{values.description | dump}}
+spec:
+  type: openapi
+  lifecycle: development
+  owner: ${{values.owner | dump}}
+  definition: |
+    openapi: 3.0.0
+    info:
+      title: API Spec
+      version: 1.0.0
+      description: >-
+        This is a sample OpenAPI 3.0 spec
+    paths:
+      /ping:
+        summary: Get a properties details
+        get:
+          summary: Ping endpoint
+          responses:
+            default:
+              description: sample endpoint
